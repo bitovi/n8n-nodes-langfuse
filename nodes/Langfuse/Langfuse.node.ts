@@ -81,23 +81,34 @@ export class Langfuse implements INodeType {
 }
 
 async function logToLangfuse(input: string, output: string) {
-	console.log("[Langfuse] Initializing Langfuse...");
-	const langfuse = new LangfuseLib({
-		publicKey: process.env.LANGFUSE_PUBLIC_KEY,
-		secretKey: process.env.LANGFUSE_SECRET_KEY,
-		baseUrl: process.env.LANGFUSE_HOST,
-	});
-	console.log("[Langfuse] Langfuse BaseURL: ", langfuse.baseUrl);
-	console.log("[Langfuse] Creating trace...");
-	const trace = langfuse.trace({ name: 'langfuse-test-trace', userId: 'n8n-manual-test' });
-	console.log("[Langfuse] Trace TraceId: ", trace.traceId);
-	console.log("[Langfuse] Updating created trace...");
-	await trace.update({ input, output });
-	console.log("[Langfuse] Creating span...");
-	const span = trace.span({ name: 'langfuse-inference' });
-	console.log("[Langfuse] Span Id: ", span.id);
-	console.log("[Langfuse] Updating created span...");
-	await span.update({ input, output });
-	await span.end();
-	await langfuse.flush?.();
+	try{
+		console.log("[Langfuse] Environment variables:");
+		console.log("  LANGFUSE_PUBLIC_KEY:", process.env.LANGFUSE_PUBLIC_KEY ? "SET" : "MISSING");
+		console.log("  LANGFUSE_SECRET_KEY:", process.env.LANGFUSE_SECRET_KEY ? "SET" : "MISSING");
+		console.log("  LANGFUSE_HOST:", process.env.LANGFUSE_HOST);
+		console.log("[Langfuse] Initializing Langfuse...");
+		const langfuse = new LangfuseLib({
+			publicKey: process.env.LANGFUSE_PUBLIC_KEY,
+			secretKey: process.env.LANGFUSE_SECRET_KEY,
+			baseUrl: process.env.LANGFUSE_HOST,
+		});
+		console.log("[Langfuse] Instance created:", !!langfuse);
+		console.log("[Langfuse] Instance type:", typeof langfuse);
+		console.log("[Langfuse] Creating trace...");
+		const trace = langfuse.trace({ name: 'langfuse-test-trace', userId: 'n8n-manual-test' });
+		console.log("[Langfuse] Trace TraceId: ", trace.id);
+		console.log("[Langfuse] Updating created trace...");
+		await trace.update({ input, output });
+		console.log("[Langfuse] Creating span...");
+		const span = trace.span({ name: 'langfuse-inference' });
+		console.log("[Langfuse] Span Id: ", span.id);
+		console.log("[Langfuse] Updating created span...");
+		await span.update({ input, output });
+		await span.end();
+		await langfuse.flush?.();
+	}
+	catch (error){
+		console.error("[Langfuse] Error:", error);
+		throw error;
+	}
 }
