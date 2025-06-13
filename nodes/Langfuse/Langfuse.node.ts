@@ -84,8 +84,8 @@ async function logToLangfuse(input: string, output: string) {
 	console.log("[Langfuse] Initializing Langfuse...");
 	const langfuse = new LangfuseLib({
 		publicKey: process.env.LANGFUSE_PUBLIC_KEY,
-		secretKey: process.env.LANGFUSE_HOST,
-		baseUrl: process.env.LANGFUSE_SECRET_KEY,
+		secretKey: process.env.LANGFUSE_SECRET_KEY,
+		baseUrl: process.env.LANGFUSE_HOST,
 	});
 	console.log("[Langfuse] Langfuse BaseURL: ", langfuse.baseUrl);
 	console.log("[Langfuse] Creating trace...");
