@@ -1,0 +1,60 @@
+{
+  "name": "@bitovi/n8n-nodes-langfuse",
+  "version": "0.1.0",
+  "description": "n8n node to process Langfuse configuration files",
+  "keywords": [
+    "n8n-community-node-package",
+    "langfuse"
+  ],
+  "license": "MIT",
+  "homepage": "",
+  "author": {
+    "name": "Roye",
+    "email": "roye@bitovi.com"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/bitovi/n8n-nodes-langfuse.git"
+  },
+  "engines": {
+    "node": ">=18.10",
+    "pnpm": ">=9.1"
+  },
+  "packageManager": "pnpm@9.1.4",
+  "main": "index.js",
+  "scripts": {
+    "build": "tsc && gulp build:icons",
+    "dev": "tsc --watch",
+    "format": "prettier nodes --write",
+    "lint": "eslint nodes package.json",
+    "lintfix": "eslint nodes package.json --fix",
+    "prepublishOnly": "pnpm build && pnpm lint -c .eslintrc.prepublish.js nodes package.json",
+    "test": "jest --coverage --coverageReporters=text-summary --reporter=default --reporter=html,text"
+  },
+  "files": [
+    "dist"
+  ],
+  "n8n": {
+    "n8nNodesApiVersion": 1,
+    "nodes": [
+      "dist/nodes/Langfuse/Langfuse.node.js"
+    ]
+  },
+  "devDependencies": {
+    "@types/jest": "^29.5.14",
+    "@typescript-eslint/parser": "^7.15.0",
+    "eslint": "^8.56.0",
+    "eslint-plugin-n8n-nodes-base": "^1.16.1",
+    "gulp": "^4.0.2",
+    "jest": "^29.7.0",
+    "prettier": "^3.3.2",
+    "ts-jest": "^29.3.4",
+    "typescript": "^5.5.3"
+  },
+  "peerDependencies": {
+    "n8n-workflow": "*"
+  },
+  "dependencies": {
+    "langfuse": "^3.37.4"
+  }
+}
