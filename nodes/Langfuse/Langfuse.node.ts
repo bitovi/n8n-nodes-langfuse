@@ -4,7 +4,7 @@ import {
 	INodeType,
 	INodeTypeDescription,
 } from 'n8n-workflow';
-import { Langfuse as LangfuseLib } from "langfuse";
+import { Langfuse as LangfuseLib } from 'langfuse';
 
 export class Langfuse implements INodeType {
 	description: INodeTypeDescription = {
@@ -78,9 +78,6 @@ export class Langfuse implements INodeType {
 		return [returnData];
 	}
 }
-
-
-
 
 async function logToLangfuse(input: string, output: string) {
 	const langfuse = new LangfuseLib({
