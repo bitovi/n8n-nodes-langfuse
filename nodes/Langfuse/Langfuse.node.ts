@@ -87,12 +87,15 @@ async function logToLangfuse(input: string, output: string) {
 		secretKey: process.env.LANGFUSE_HOST,
 		baseUrl: process.env.LANGFUSE_SECRET_KEY,
 	});
+	console.log("[Langfuse] Langfuse BaseURL: ", langfuse.baseUrl);
 	console.log("[Langfuse] Creating trace...");
 	const trace = langfuse.trace({ name: 'langfuse-test-trace', userId: 'n8n-manual-test' });
+	console.log("[Langfuse] Trace TraceId: ", trace.traceId);
 	console.log("[Langfuse] Updating created trace...");
 	await trace.update({ input, output });
 	console.log("[Langfuse] Creating span...");
 	const span = trace.span({ name: 'langfuse-inference' });
+	console.log("[Langfuse] Span Id: ", span.id);
 	console.log("[Langfuse] Updating created span...");
 	await span.update({ input, output });
 	await span.end();
