@@ -59,10 +59,11 @@ export class Langfuse implements INodeType {
 			try {
 				const input = this.getNodeParameter('llmInput', i) as string;
 				const output = this.getNodeParameter('llmOutput', i) as string;
+				const workflowName = this.getWorkflow().name as string;
 
-				await logToLangfuse(input, output);
+				await logToLangfuse(input, output, workflowName);
 
-				returnData.push({ json: { success: true } });
+				returnData.push({ json: { success: true, workflowName } });
 			} catch (error) {
 				if (this.continueOnFail()) {
 					returnData.push({
@@ -80,29 +81,20 @@ export class Langfuse implements INodeType {
 	}
 }
 
-async function logToLangfuse(input: string, output: string) {
-	try{
-		console.log("[Langfuse] Environment variables:");
-		console.log("  LANGFUSE_PUBLIC_KEY:", process.env.LANGFUSE_PUBLIC_KEY ? "SET" : "MISSING");
-		console.log("  LANGFUSE_SECRET_KEY:", process.env.LANGFUSE_SECRET_KEY ? "SET" : "MISSING");
-		console.log("  LANGFUSE_HOST:", process.env.LANGFUSE_HOST);
+async function logToLangfuse(input: string, output: string, workflowName: string) {
+	try{	
+		const workflowSlug = workflowName.trim().toLowerCase().replace(/\s+/g, '-');
 		console.log("[Langfuse] Initializing Langfuse...");
 		const langfuse = new LangfuseLib({
 			publicKey: process.env.LANGFUSE_PUBLIC_KEY,
 			secretKey: process.env.LANGFUSE_SECRET_KEY,
 			baseUrl: process.env.LANGFUSE_HOST,
 		});
-		console.log("[Langfuse] Instance created:", !!langfuse);
-		console.log("[Langfuse] Instance type:", typeof langfuse);
 		console.log("[Langfuse] Creating trace...");
-		const trace = langfuse.trace({ name: 'langfuse-test-trace', userId: 'n8n-manual-test' });
-		console.log("[Langfuse] Trace TraceId: ", trace.id);
-		console.log("[Langfuse] Updating created trace...");
-		await trace.update({ input, output });
+		const trace = langfuse.trace({ name: `langfuse-test-${workflowSlug}-trace`, userId: 'n8n-manual-test' });
+		await trace.update({ input, output, metadata: { workflowName: workflowName } });
 		console.log("[Langfuse] Creating span...");
-		const span = trace.span({ name: 'langfuse-inference' });
-		console.log("[Langfuse] Span Id: ", span.id);
-		console.log("[Langfuse] Updating created span...");
+		const span = trace.span({ name: `langfuse-${workflowSlug}-inference`, metadata: { workflowName: workflowName } });
 		await span.update({ input, output });
 		await span.end();
 		await langfuse.flush?.();
