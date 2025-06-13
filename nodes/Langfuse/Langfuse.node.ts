@@ -80,14 +80,19 @@ export class Langfuse implements INodeType {
 }
 
 async function logToLangfuse(input: string, output: string) {
+	console.log("[Langfuse] Initializing Langfuse...");
 	const langfuse = new LangfuseLib({
 		publicKey: process.env.LANGFUSE_PUBLIC_KEY,
 		secretKey: process.env.LANGFUSE_HOST,
 		baseUrl: process.env.LANGFUSE_SECRET_KEY,
 	});
-	const trace = langfuse.trace({ name: 'ollama-test-trace', userId: 'n8n-manual-test' });
+	console.log("[Langfuse] Creating trace...");
+	const trace = langfuse.trace({ name: 'langfuse-test-trace', userId: 'n8n-manual-test' });
+	console.log("[Langfuse] Updating created trace...");
 	await trace.update({ input, output });
-	const span = trace.span({ name: 'ollama-inference' });
+	console.log("[Langfuse] Creating span...");
+	const span = trace.span({ name: 'langfuse-inference' });
+	console.log("[Langfuse] Updating created span...");
 	await span.update({ input, output });
 	await span.end();
 	await langfuse.flush?.();
