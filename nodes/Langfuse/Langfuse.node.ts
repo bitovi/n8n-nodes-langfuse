@@ -3,6 +3,7 @@ import {
 	INodeExecutionData,
 	INodeType,
 	INodeTypeDescription,
+	NodeConnectionType
 } from 'n8n-workflow';
 import { Langfuse as LangfuseLib } from 'langfuse';
 
@@ -17,8 +18,8 @@ export class Langfuse implements INodeType {
 		defaults: {
 			name: 'Langfuse',
 		},
-		inputs: ['main'],
-		outputs: ['main'],
+		inputs: [NodeConnectionType.Main],
+		outputs: [NodeConnectionType.Main],
 		properties: [
 			{
 				displayName: 'Action',
