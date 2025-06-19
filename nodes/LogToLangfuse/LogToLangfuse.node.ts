@@ -7,16 +7,18 @@ import {
 } from 'n8n-workflow';
 import { Langfuse as LangfuseLib } from 'langfuse';
 
-export class Langfuse implements INodeType {
+const LOG_NAME = "LogToLangfuse";
+
+export class LogToLangfuse implements INodeType {
 	description: INodeTypeDescription = {
-		displayName: 'Langfuse',
-		name: 'langfuse',
+		displayName: 'LogToLangfuse',
+		name: 'logToLangfuse',
 		icon: 'file:langfuse.svg',
 		group: ['transform'],
 		version: 1,
 		description: 'Log LLM input/output to Langfuse',
 		defaults: {
-			name: 'Langfuse',
+			name: 'LogToLangfuse',
 		},
 		inputs: [NodeConnectionType.Main],
 		outputs: [NodeConnectionType.Main],
@@ -84,23 +86,23 @@ export class Langfuse implements INodeType {
 async function logToLangfuse(input: string, output: string, workflowName: string) {
 	try{	
 		const workflowSlug = workflowName.trim().toLowerCase().replace(/\s+/g, '-');
-		console.log("[Langfuse] Initializing Langfuse...");
+		console.log(`[${LOG_NAME}] Initializing Langfuse...`);
 		const langfuse = new LangfuseLib({
 			publicKey: process.env.LANGFUSE_PUBLIC_KEY,
 			secretKey: process.env.LANGFUSE_SECRET_KEY,
 			baseUrl: process.env.LANGFUSE_HOST,
 		});
-		console.log("[Langfuse] Creating trace...");
+		console.log(`[${LOG_NAME}] Creating trace...`);
 		const trace = langfuse.trace({ name: `langfuse-test-${workflowSlug}-trace`, userId: 'n8n-manual-test' });
 		await trace.update({ input, output, metadata: { workflowName: workflowName } });
-		console.log("[Langfuse] Creating span...");
+		console.log(`[${LOG_NAME}] Creating span...`);
 		const span = trace.span({ name: `langfuse-${workflowSlug}-inference`, metadata: { workflowName: workflowName } });
 		await span.update({ input, output });
 		await span.end();
 		await langfuse.flush?.();
 	}
 	catch (error){
-		console.error("[Langfuse] Error:", error);
+		console.error(`[${LOG_NAME}] Error: ${error}`);
 		throw error;
 	}
 }
