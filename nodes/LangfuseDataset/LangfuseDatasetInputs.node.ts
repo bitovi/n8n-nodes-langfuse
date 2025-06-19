@@ -68,12 +68,12 @@ export class LangfuseDatasetInputs implements INodeType {
 }
 
 async function getDatasetInputs(executeFuncs: IExecuteFunctions, langfuse: LangfuseCreate, workflowName: string) {
-	const returnInputs: any[] = [];
+	const returnInputs: INodeExecutionData[] = [];
 
 	try{
 		const workflowSlug = workflowName.trim().toLowerCase().replace(/\s+/g, '-');
 
-		console.log(`[${LOG_NAME}] Gathering dataset inputs...`);
+		console.log(`[${LOG_NAME}] Gathering ${workflowName} workflow's dataset inputs...`);
 		const dataset = await langfuse.getDataset(`dataset-${workflowSlug}`);
 		console.log(`[${LOG_NAME}] Dataset ${dataset.name} gathered.`);
 
@@ -89,11 +89,11 @@ async function getDatasetInputs(executeFuncs: IExecuteFunctions, langfuse: Langf
 	}
 	catch (error) {
 		if (error.message.includes('not found') || error.status === 404) {
-			console.error(`[${LOG_NAME}] Dataset for workflow ${workflowName} does not exist`);
+			console.error(`[${LOG_NAME}] Dataset for ${workflowName} workflow does not exist`);
 			// create new? create a defaut LLM dataset to use?
 			returnInputs.push({
 				json: {
-					error: `Dataset for workflow ${workflowName} does not exist`,
+					error: `Dataset for ${workflowName} workflow does not exist`,
 				},
 			});
 		} else {
