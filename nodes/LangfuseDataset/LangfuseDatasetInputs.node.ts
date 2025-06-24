@@ -3,20 +3,20 @@ import {
 	INodeExecutionData,
 	INodeType,
 	INodeTypeDescription,
-	NodeConnectionType
+	NodeConnectionType,
 } from 'n8n-workflow';
-import { ApiDatasetItem, Langfuse as LangfuseCreate } from 'langfuse';
+import { Langfuse as LangfuseCreate } from 'langfuse';
 
-const LOG_NAME = "LangfuseDatasetInputs";
+const LOG_NAME = 'LangfuseDatasetInputs';
 
 export class LangfuseDatasetInputs implements INodeType {
 	description: INodeTypeDescription = {
-		displayName: 'LangfuseDatasetInputs',
+		displayName: 'Dataset Inputs',
 		name: 'langfuseDatasetInputs',
 		icon: 'file:langfuse.svg',
 		group: ['transform'],
 		version: 1,
-		description: 'Grab specific workflow\'s Langfuse dataset inputs to run',
+		description: "Grab specific workflow's Langfuse dataset inputs to run",
 		defaults: {
 			name: 'LangfuseDatasetInputs',
 		},
@@ -34,7 +34,7 @@ export class LangfuseDatasetInputs implements INodeType {
 					},
 				],
 				default: 'langfuseDatasetInputs',
-			}
+			},
 		],
 	};
 
@@ -52,6 +52,9 @@ export class LangfuseDatasetInputs implements INodeType {
 			});
 
 			returnData = await getDatasetInputs(this, langfuse, workflowName);
+
+			console.log(`[${LOG_NAME}] Flushing Langfuse...`);
+			await langfuse.flushAsync();
 		} catch (error) {
 			if (this.continueOnFail()) {
 				returnData.push({
@@ -67,27 +70,67 @@ export class LangfuseDatasetInputs implements INodeType {
 	}
 }
 
-async function getDatasetInputs(executeFuncs: IExecuteFunctions, langfuse: LangfuseCreate, workflowName: string) {
+async function getDatasetInputs(
+	executeFuncs: IExecuteFunctions,
+	langfuse: LangfuseCreate,
+	workflowName: string,
+) {
 	const returnInputs: INodeExecutionData[] = [];
 
-	try{
+	try {
+		var runName = "";
 		const workflowSlug = workflowName.trim().toLowerCase().replace(/\s+/g, '-');
 
 		console.log(`[${LOG_NAME}] Gathering ${workflowName} workflow's dataset inputs...`);
 		const dataset = await langfuse.getDataset(`dataset-${workflowSlug}`);
-		console.log(`[${LOG_NAME}] Dataset ${dataset.name} gathered.`);
-
-		for(const datasetItem in dataset.items){
-			const item = datasetItem as unknown as ApiDatasetItem;
-			if (item.status == 'ACTIVE') {
-				console.log(`[${LOG_NAME}] Retrieved ${item.status} Dataset Item: ${item.id}`);
-				returnInputs.push({ json: { input: item.input, itemId: item.id }});
-			} else {
-				console.log(`[${LOG_NAME}] Dataset Item ${item.id} is ${item.status}`);
+		if (!dataset) {
+			console.log(`[${LOG_NAME}] Dataset for ${workflowName} workflow does not exist`);
+		} else {
+			console.log(`[${LOG_NAME}] Dataset ${dataset.name} gathered.`);
+			console.log(`[${LOG_NAME}] Creating dataset run name...`);
+			runName = `experiment-${workflowSlug}-${Date.now()}`;
+		}
+		if (!dataset.items) {
+			console.log(`[${LOG_NAME}] Dataset Items for ${workflowName} workflow do not exist`);
+		} else {
+			for (const itemRaw of dataset.items) {
+				const item = itemRaw as any; //avoid type issues in returnInputs
+				if (item.status == 'ACTIVE') {
+					console.log(`[${LOG_NAME}] Retrieved ${item.status} Dataset Item: ${item.id}`);
+					console.log(`[${LOG_NAME}] Creating Dataset Item Trace...`);
+					const startTime = new Date().toISOString();
+					const itemTrace = langfuse.trace({
+						name: `trace-dataset-run-${workflowSlug}`,
+						userId: 'n8n-dataset-run-test',
+						input: item.input,
+						metadata: { 
+							startTime: startTime,
+							itemId: item.id,
+							runName: runName,
+							workflowName: workflowName 
+						}
+					});
+					await item.link(itemTrace, runName, {
+						description: `Dataset ${dataset.name} for ${workflowName} workflow`,
+					});
+					console.log(`[${LOG_NAME}] Creating Dataset Item Trace Span...`);
+					const itemSpan = itemTrace.span({
+						name: `span-dataset-run-${item.id}`,
+						input: item.input,
+						metadata: { 
+							startTime: startTime,
+							itemId: item.id,
+							runName: runName,
+							workflowName: workflowName 
+						}
+					});
+					returnInputs.push({ json: { input: item.input, itemId: item.id, traceId: itemTrace.traceId, spanId: itemSpan.id, runName: runName } });
+				} else {
+					console.log(`[${LOG_NAME}] Dataset Item ${item.id} is ${item.status}`);
+				}
 			}
 		}
-	}
-	catch (error) {
+	} catch (error) {
 		if (error.message.includes('not found') || error.status === 404) {
 			console.error(`[${LOG_NAME}] Dataset for ${workflowName} workflow does not exist`);
 			// create new? create a defaut LLM dataset to use?
@@ -109,6 +152,6 @@ async function getDatasetInputs(executeFuncs: IExecuteFunctions, langfuse: Langf
 			}
 		}
 	}
-	
+
 	return returnInputs;
 }
