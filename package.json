@@ -37,7 +37,8 @@
   "n8n": {
     "n8nNodesApiVersion": 1,
     "nodes": [
-      "dist/nodes/Langfuse/Langfuse.node.js"
+      "dist/nodes/LogToLangfuse/LogToLangfuse.node.js",
+      "dist/nodes/LangfuseDataset/LangfuseDatasetInputs.node.js"
     ]
   },
   "devDependencies": {

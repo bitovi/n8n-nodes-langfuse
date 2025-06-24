@@ -1,5 +1,5 @@
 {
-	"node": "n8n-nodes-base.Langfuse",
+	"node": "n8n-nodes-base.LangfuseDatasetOutputComparison",
 	"nodeVersion": "1.0",
 	"codexVersion": "1.0",
 	"categories": ["Custom Nodes"],
