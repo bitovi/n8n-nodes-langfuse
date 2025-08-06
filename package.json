@@ -1,6 +1,6 @@
 {
   "name": "@bitovi/n8n-nodes-langfuse",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "n8n node to process Langfuse configuration files",
   "keywords": [
     "n8n-community-node-package",
